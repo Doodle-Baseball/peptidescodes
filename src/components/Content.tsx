@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { marked } from "marked";
 import type { Faq } from "@/lib/types";
+import { externalRel } from "@/lib/format";
 
 marked.setOptions({ gfm: true, breaks: false });
 
@@ -10,7 +11,14 @@ export function JsonLd({ data }: { data: unknown }) {
 
 export function Markdown({ content, className = "" }: { content?: string | null; className?: string }) {
   if (!content?.trim()) return null;
-  const html = marked.parse(content, { async: false }) as string;
+  const html = (marked.parse(content, { async: false }) as string)
+    // External links in content: nofollow (except PepLookup), opened in a new tab. Internal links untouched.
+    .replace(/<a href="(https?:\/\/[^"]+)"/g, (m, href: string) => {
+      try {
+        if (/(^|\.)peptidescodes\.com$/i.test(new URL(href).hostname)) return m;
+      } catch { return m; }
+      return `<a href="${href}" target="_blank" rel="${externalRel(href)}"`;
+    });
   return <div className={`prose-pc ${className}`} dangerouslySetInnerHTML={{ __html: html }} />;
 }
 

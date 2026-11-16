@@ -81,6 +81,7 @@ export default function SettingsAdmin() {
             {F("google_site_verification", "Google Search Console verification code", "Only the content value of the meta tag.")}
             {F("bing_site_verification", "Bing Webmaster verification code")}
             {F("ga_measurement_id", "Google Analytics 4 ID", "", "G-XXXXXXXXXX")}
+            {F("gtm_id", "Google Tag Manager ID", "Loads on all public pages (not the admin).", "GTM-XXXXXXX")}
           </div>
         </Card>
       </div>

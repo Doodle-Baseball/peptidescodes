@@ -53,7 +53,7 @@ export function CouponTable({ items, withFilters = true, limit, mobileLimit }: P
             <label htmlFor="f-q" className="mb-1.5 block text-[12px] font-semibold uppercase tracking-[0.16em] text-[#8a8a8a]">Search vendor or code</label>
             <div className="relative">
               <IconSearch size={17} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-              <input id="f-q" value={q} autoComplete="off" spellCheck={false} onChange={(e) => setQ(e.target.value)} placeholder="e.g. Amino Club" className="no-focus-ring h-12 w-full rounded-xl border border-line bg-white pl-10 pr-3 text-[15px] transition-colors focus:border-[#cfccc4]" />
+              <input id="f-q" value={q} autoComplete="off" spellCheck={false} onChange={(e) => setQ(e.target.value)} placeholder="e.g. Amino Club" className="no-focus-ring h-12 w-full rounded-xl border border-line bg-white pl-10 pr-3 text-[16px] md:text-[15px] transition-colors focus:border-[#cfccc4]" />
             </div>
           </div>
           <Select id="f-d" label="Discount" value={String(minPct)} onChange={(v) => setMinPct(Number(v))} options={[["0", "All discounts"], ["10", "10% off or more"], ["15", "15% off or more"], ["20", "20% off or more"], ["25", "25% off or more"], ["50", "50% off or more"]]} />
@@ -63,7 +63,8 @@ export function CouponTable({ items, withFilters = true, limit, mobileLimit }: P
       )}
       {withFilters && <p className="mb-3 mt-5 text-[14px] text-muted" aria-live="polite"><b className="text-ink">{rows.length}</b> {rows.length === 1 ? "code" : "codes"}</p>}
 
-      <div className="card-3d" data-reveal>
+      {/* No scroll-reveal here: the table is very tall, so it must render immediately. */}
+      <div className="card-3d">
         <div className="overflow-hidden rounded-[26px]">
         <table className="w-full border-collapse text-left">
           <thead className="hidden border-b border-line bg-white md:table-header-group">

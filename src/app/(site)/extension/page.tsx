@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { externalRel } from "@/lib/format";
 import { notFound } from "next/navigation";
 import { getPage, getSettings, siteStats, isPagePublished } from "@/lib/data";
 import { buildMetadata } from "@/lib/seo";
@@ -42,7 +43,7 @@ export default async function ExtensionPage() {
             <h1 className="h-display mt-5 text-[42px] sm:text-[60px]">{page.title}</h1>
             <p className="mt-5 max-w-xl text-[18px] leading-relaxed text-white/75">{page.subtitle}</p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
-              <a href={settings.extension_url} target="_blank" rel="noopener" className="btn h-14 bg-white px-7 text-[16px] text-ink hover:bg-sky"><IconChrome size={22} /> Add to Chrome, it&apos;s free</a>
+              <a href={settings.extension_url} target="_blank" rel={externalRel(settings.extension_url)} className="btn h-14 bg-white px-7 text-[16px] text-ink hover:bg-sky"><IconChrome size={22} /> Add to Chrome, it&apos;s free</a>
               <span className="flex items-center gap-2 text-[14px] text-white/75"><span className="flex text-gold">{[0, 1, 2, 3, 4].map((i) => <IconStar key={i} size={16} />)}</span> 5.0 on the Chrome Web Store</span>
             </div>
           </div>
@@ -90,7 +91,7 @@ export default async function ExtensionPage() {
           <div>
             <h2 className="h-display mb-6 text-[32px] text-ink" data-reveal>Extension FAQ</h2>
             <div data-reveal><FaqList faqs={faqs} /></div>
-            <a href={settings.extension_url} target="_blank" rel="noopener" className="btn btn-primary mt-8"><IconChrome size={18} /> Install free extension</a>
+            <a href={settings.extension_url} target="_blank" rel={externalRel(settings.extension_url)} className="btn btn-primary mt-8"><IconChrome size={18} /> Install free extension</a>
             <ul className="mt-6 space-y-2 text-[14px] text-muted">
               {["Never submits forms or places orders for you", "Never replaces another site's referral"].map((t) => (<li key={t} className="flex items-center gap-2"><IconCheck size={15} className="text-green" /> {t}</li>))}
             </ul>

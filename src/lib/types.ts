@@ -90,6 +90,8 @@ export type Settings = {
   google_site_verification: string;
   bing_site_verification: string;
   ga_measurement_id: string;
+  /** Google Tag Manager container ID, e.g. GTM-XXXXXXX (public pages only). */
+  gtm_id: string;
   announcement: string;
 };
 

@@ -5,7 +5,7 @@ import { buildMetadata } from "@/lib/seo";
 import { JsonLd, Markdown, PageHero } from "@/components/Content";
 import { ContactForm } from "@/components/Forms";
 import { IconClock, IconMail, IconPhone, IconWhatsApp } from "@/components/Icons";
-import { whatsappUrl } from "@/lib/format";
+import { externalRel, whatsappUrl } from "@/lib/format";
 
 export const revalidate = 3600;
 
@@ -29,7 +29,7 @@ export default async function ContactPage() {
               <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#0b3d80] to-ink text-white"><IconMail size={22} /></span>
               <span><span className="block text-[12px] font-bold uppercase tracking-[0.12em] text-muted">Email</span><span className="font-semibold text-ink">{settings.contact_email}</span></span>
             </a>
-            <a href={whatsappUrl(settings.contact_phone, "Hi PeptidesCodes, ")} target="_blank" rel="noopener" className="card card-hover flex items-center gap-4 p-5">
+            <a href={whatsappUrl(settings.contact_phone, "Hi PeptidesCodes, ")} target="_blank" rel={externalRel(whatsappUrl(settings.contact_phone))} className="card card-hover flex items-center gap-4 p-5">
               <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#25D366] text-white"><IconWhatsApp size={24} /></span>
               <span><span className="block text-[12px] font-bold uppercase tracking-[0.12em] text-muted">WhatsApp</span><span className="font-semibold text-ink">{settings.contact_phone}</span></span>
             </a>

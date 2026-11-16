@@ -48,6 +48,14 @@ export function HeroSearch({ vendors }: { vendors: VendorLite[] }) {
       >
         <IconSearch className="ml-3 shrink-0 text-muted" />
         <label htmlFor="hero-q" className="sr-only">Search a vendor</label>
+        <span className="relative flex min-w-0 flex-1 items-center">
+        {/* Responsive placeholder: short on phones, full on larger screens. */}
+        {!q && (
+          <span aria-hidden className="pointer-events-none absolute inset-y-0 left-0 right-1 flex items-center overflow-hidden text-[15px] text-[#8a93a8] sm:text-[16px]">
+            <span className="truncate sm:hidden">Search a vendor…</span>
+            <span className="hidden truncate sm:inline">Search a vendor, e.g. Ascension Peptides</span>
+          </span>
+        )}
         <input
           id="hero-q"
           name="q"
@@ -62,13 +70,13 @@ export function HeroSearch({ vendors }: { vendors: VendorLite[] }) {
             if (e.key === "ArrowUp") { e.preventDefault(); setHi((h) => Math.max(h - 1, -1)); }
             if (e.key === "Escape") setOpen(false);
           }}
-          placeholder="Search a vendor, e.g. Ascension Peptides"
-          className="no-focus-ring h-12 min-w-0 flex-1 bg-transparent text-[16px] text-ink placeholder:text-[#8a93a8]"
+          className="no-focus-ring relative h-12 w-full min-w-0 bg-transparent text-[16px] text-ink"
           role="combobox"
           aria-expanded={open}
           aria-controls="hero-search-list"
           aria-autocomplete="list"
         />
+        </span>
         <button className="btn btn-primary h-12 shrink-0">Find code</button>
       </form>
 

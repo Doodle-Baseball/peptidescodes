@@ -62,17 +62,18 @@ export function Interactions() {
       els.forEach((el) => el.classList.add("is-in"));
       return;
     }
-    const io = new IntersectionObserver(
-      (entries) => entries.forEach((e) => {
+    const reveal = (obs: IntersectionObserver) => (entries: IntersectionObserverEntry[]) =>
+      entries.forEach((e) => {
         if (e.isIntersecting) {
           e.target.classList.add("is-in");
-          io.unobserve(e.target);
+          obs.unobserve(e.target);
         }
-      }),
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
-    );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
+      });
+    const io: IntersectionObserver = new IntersectionObserver((en) => reveal(io)(en), { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
+    // Elements taller than the screen can never be 8% visible on a phone, so reveal them as soon as they enter.
+    const tallIo: IntersectionObserver = new IntersectionObserver((en) => reveal(tallIo)(en), { threshold: 0 });
+    els.forEach((el) => (el.offsetHeight > window.innerHeight * 0.9 ? tallIo : io).observe(el));
+    return () => { io.disconnect(); tallIo.disconnect(); };
   }, [pathname]);
 
   useEffect(() => {

@@ -31,3 +31,21 @@ export function whatsappUrl(phone: string, text?: string) {
   const digits = phone.replace(/\D/g, "");
   return `https://wa.me/${digits}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
 }
+
+/** Chrome Web Store ID of the PepLookup extension. */
+const PEPLOOKUP_EXTENSION_ID = "pogbkndeefgihpmgpgidimjapbocfckd";
+
+/** True for links to PepLookup (peplookup.* websites or the PepLookup Chrome extension). */
+export function isPepLookupUrl(url: string | null | undefined) {
+  try {
+    const u = new URL(url || "");
+    return /(^|\.)peplookup\.[a-z.]+$/i.test(u.hostname) || u.pathname.includes(PEPLOOKUP_EXTENSION_ID);
+  } catch {
+    return false;
+  }
+}
+
+/** rel for an external link: PepLookup links are dofollow, every other website is nofollow. */
+export function externalRel(url: string | null | undefined, extra = "") {
+  return [extra, isPepLookupUrl(url) ? "" : "nofollow", "noopener"].filter(Boolean).join(" ");
+}

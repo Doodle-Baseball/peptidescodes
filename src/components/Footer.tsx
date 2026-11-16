@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Settings, Vendor } from "@/lib/types";
 import { Wordmark } from "./BrandLogo";
 import { IconChrome, IconMail, IconPhone, IconWhatsApp } from "./Icons";
-import { whatsappUrl } from "@/lib/format";
+import { externalRel, whatsappUrl } from "@/lib/format";
 
 const H = ({ children }: { children: React.ReactNode }) => (
   <h3 className="text-[11.5px] font-semibold uppercase tracking-[0.24em] text-white/45">{children}</h3>
@@ -20,11 +20,11 @@ export function Footer({ settings, topVendors }: { settings: Settings; topVendor
           <Link href="/" aria-label={`${settings.site_name} home`} className="inline-block"><Wordmark light size="lg" /></Link>
           <p className="mt-8 max-w-xs text-[14.5px] leading-relaxed text-white/60">{settings.tagline}. Independent, hand-checked and dated research peptide coupon codes.</p>
           <ul className="mt-6 space-y-3 text-[14.5px]">
-            <li><a href={whatsappUrl(settings.contact_phone, "Hi PeptidesCodes, ")} target="_blank" rel="noopener" className="flex items-center gap-2.5 text-white/80 hover:text-white"><IconWhatsApp size={16} /> WhatsApp {settings.contact_phone}</a></li>
+            <li><a href={whatsappUrl(settings.contact_phone, "Hi PeptidesCodes, ")} target="_blank" rel={externalRel(whatsappUrl(settings.contact_phone))} className="flex items-center gap-2.5 text-white/80 hover:text-white"><IconWhatsApp size={16} /> WhatsApp {settings.contact_phone}</a></li>
             <li><a href={`tel:${tel}`} className="flex items-center gap-2.5 text-white/80 hover:text-white"><IconPhone size={16} /> Call {settings.contact_phone}</a></li>
             <li><a href={`mailto:${settings.contact_email}`} className="flex items-center gap-2.5 text-white/80 hover:text-white"><IconMail size={16} /> {settings.contact_email}</a></li>
           </ul>
-          <a href={settings.extension_url} target="_blank" rel="noopener" className="btn btn-white mt-7"><IconChrome size={18} /> Get the Chrome extension</a>
+          <a href={settings.extension_url} target="_blank" rel={externalRel(settings.extension_url)} className="btn btn-white mt-7"><IconChrome size={18} /> Get the Chrome extension</a>
         </div>
         <div className="border-t border-white/10 px-6 py-12 sm:px-10 lg:border-l lg:border-t-0">
           <H>Coupons</H>

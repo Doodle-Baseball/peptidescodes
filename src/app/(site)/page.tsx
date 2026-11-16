@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getPage, getPosts, getSettings, getVendors, lite, siteStats, sortByDiscount } from "@/lib/data";
 import { buildMetadata } from "@/lib/seo";
-import { formatDate, monthYear } from "@/lib/format";
+import { externalRel, formatDate, monthYear } from "@/lib/format";
 import { HeroCarousel } from "@/components/HeroCarousel";
 import { HeroSearch } from "@/components/HeroSearch";
 import { CouponTable } from "@/components/CouponTable";
@@ -233,7 +233,7 @@ export default async function HomePage() {
                   ))}
                 </ul>
                 <div className="mt-8 flex flex-wrap gap-3">
-                  <a href={settings.extension_url} target="_blank" rel="noopener" className="btn btn-primary"><IconChrome size={18} /> Add to Chrome, it&apos;s free</a>
+                  <a href={settings.extension_url} target="_blank" rel={externalRel(settings.extension_url)} className="btn btn-primary"><IconChrome size={18} /> Add to Chrome, it&apos;s free</a>
                   <Link href="/extension" className="btn btn-ghost">How it works</Link>
                 </div>
                 <p className="mt-4 flex items-center gap-1.5 text-[13.5px] text-muted"><span className="flex text-gold">{[0, 1, 2, 3, 4].map((i) => <IconStar key={i} size={15} />)}</span> 5.0 rating on the Chrome Web Store</p>
@@ -297,13 +297,13 @@ export default async function HomePage() {
           <div className="container-x">
             <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
               <SectionHeading eyebrow="Guides" title="Buy smarter, not just cheaper" />
-              <Link href="/guides" className="btn btn-ghost shrink-0" data-reveal>All guides <IconArrowRight size={16} /></Link>
+              <Link href="/guides" className="btn btn-ghost shrink-0 self-start md:self-auto" data-reveal>All guides <IconArrowRight size={16} /></Link>
             </div>
-            <div className="-mx-4 mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-3 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-3 md:gap-5 md:overflow-visible md:px-0 md:pb-0">
+            <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
               {posts.slice(0, 3).map((p, i) => (
-                <Link key={p.slug} href={`/guides/${p.slug}`} className="group block w-[82%] shrink-0 snap-start md:w-auto" data-reveal style={{ ["--d" as string]: `${i * 80}ms` }}>
+                <Link key={p.slug} href={`/guides/${p.slug}`} className="group block min-w-0" data-reveal style={{ ["--d" as string]: `${i * 80}ms` }}>
                   <article data-tilt="5" className="card flex h-full flex-col overflow-hidden">
-                    <div className="relative h-40 overflow-hidden bg-gradient-to-br from-[#0b3d80] via-[#0a2b66] to-ink">
+                    <div className="relative h-36 overflow-hidden bg-gradient-to-br sm:h-40 from-[#0b3d80] via-[#0a2b66] to-ink">
                       {p.cover_image ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={p.cover_image} alt="" className="h-full w-full object-cover" loading="lazy" />
@@ -311,9 +311,9 @@ export default async function HomePage() {
                         <span className="font-display absolute bottom-3 left-5 right-5 text-[22px] font-semibold leading-tight text-white/95">{p.title.split(" (")[0]}</span>
                       )}
                     </div>
-                    <div className="flex flex-1 flex-col p-6">
+                    <div className="flex flex-1 flex-col p-5 sm:p-6">
                       <time className="text-[13px] text-muted" dateTime={p.published_at || undefined}>{formatDate(p.published_at)}</time>
-                      <h3 className="mt-2 text-[18px] font-bold leading-snug text-ink group-hover:text-navy">{p.title}</h3>
+                      <h3 className="mt-2 text-[17px] font-bold leading-snug text-ink group-hover:text-navy sm:text-[18px]">{p.title}</h3>
                       <p className="mt-2 line-clamp-3 text-[14.5px] leading-relaxed text-muted">{p.excerpt}</p>
                       <span className="mt-auto pt-4 text-[14px] font-semibold text-navy">Read guide →</span>
                     </div>

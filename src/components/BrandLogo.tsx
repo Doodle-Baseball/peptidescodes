@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ticketGlyph } from "./TicketGlyph";
 
 /** Square icon, used in the admin panel and favicon. */
 export function BrandMark({ size = 36 }: { size?: number }) {
@@ -11,8 +12,7 @@ export function BrandMark({ size = 36 }: { size?: number }) {
         </linearGradient>
       </defs>
       <rect width="64" height="64" rx="15" fill="url(#pcmark)" />
-      <path d="M21 48V16h12.5a10 10 0 0 1 0 20H21" fill="none" stroke="#fff" strokeWidth="6.5" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="46.5" cy="45.5" r="5.5" fill="#209b42" stroke="#081e4c" strokeWidth="2" />
+      {ticketGlyph("pcmark-t")}
     </svg>
   );
 }

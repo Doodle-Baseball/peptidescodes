@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import type { VendorLite } from "@/lib/types";
 import { BrandLogo } from "./BrandLogo";
 import { VendorLogo } from "./VendorLogo";
+import { externalRel } from "@/lib/format";
 import { IconArrowRight, IconChevronDown, IconChrome, IconMenu, IconSearch, IconX } from "./Icons";
 
 type Props = { siteName: string; announcement?: string; extensionUrl: string; vendors: VendorLite[] };
@@ -63,7 +64,7 @@ function SearchBox({ vendors, onDone, autoFocus = false, glass = false }: { vend
             if (e.key === "Escape") setOpen(false);
           }}
           placeholder="Search vendors or codes…"
-          className={`no-focus-ring h-11 w-full rounded-xl border pl-10 pr-3 text-[15px] transition focus:border-[#cfccc4] focus:bg-white focus:text-ink focus:placeholder:text-[#8a8a8a] focus:outline-none ${glass ? "border-white/25 bg-white/15 text-white placeholder:text-white/75" : "border-line bg-white/80 text-ink placeholder:text-[#8a8a8a]"}`}
+          className={`no-focus-ring h-11 w-full rounded-xl border pl-10 pr-3 text-[16px] md:text-[15px] transition focus:border-[#cfccc4] focus:bg-white focus:text-ink focus:placeholder:text-[#8a8a8a] focus:outline-none ${glass ? "border-white/25 bg-white/15 text-white placeholder:text-white/75" : "border-line bg-white/80 text-ink placeholder:text-[#8a8a8a]"}`}
           role="combobox"
           aria-expanded={open}
           aria-controls="search-list"
@@ -132,7 +133,7 @@ export function Header({ siteName, announcement, extensionUrl, vendors }: Props)
         <div className="bg-ink text-white">
           <div className="container-x flex h-9 items-center justify-center gap-2 text-[13px]">
             <IconChrome size={15} />
-            <a href={extensionUrl} target="_blank" rel="noopener" className="truncate font-medium hover:underline">{announcement}</a>
+            <a href={extensionUrl} target="_blank" rel={externalRel(extensionUrl)} className="truncate font-medium hover:underline">{announcement}</a>
             <span className="hidden text-peri sm:inline">→</span>
           </div>
         </div>
@@ -214,11 +215,10 @@ export function Header({ siteName, announcement, extensionUrl, vendors }: Props)
             </div>
             <div className="mt-5"><SearchBox vendors={vendors} onDone={() => setMenu(false)} /></div>
             <nav className="mt-4 flex flex-col text-[17px] font-semibold" aria-label="Mobile">
-              {[["/", "Home"], ["/#top-deals", "Top deals"], ["/coupons", "All coupon codes"], ["/vendors", "Vendors A-Z"], ["/guides", "Guides"], ["/extension", "Chrome extension"], ["/about", "About"], ["/contact", "Contact"]].map(([h, l]) => (
+              {[["/", "Home"], ["/#top-deals", "Top deals"], ["/coupons", "All coupon codes"], ["/vendors", "Vendors A-Z"], ["/guides", "Guides"], ["/about", "About"], ["/contact", "Contact"]].map(([h, l]) => (
                 <Link key={h} href={h} onClick={() => setMenu(false)} className="border-b border-line py-3.5 text-ink hover:text-navy">{l}</Link>
               ))}
             </nav>
-            <a href={extensionUrl} target="_blank" rel="noopener" className="btn btn-blue mt-6 w-full"><IconChrome size={18} /> Add to Chrome for free</a>
           </div>
         </div>
       )}

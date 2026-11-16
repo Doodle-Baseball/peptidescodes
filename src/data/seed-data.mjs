@@ -187,6 +187,7 @@ export const seedSettings = {
   google_site_verification: "",
   bing_site_verification: "",
   ga_measurement_id: "",
+  gtm_id: "GTM-KGRS95LS",
   announcement: "New: get verified peptide codes automatically with our free Chrome extension",
 };
 
