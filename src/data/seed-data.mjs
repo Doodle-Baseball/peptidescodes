@@ -2,7 +2,7 @@
 // empty or not yet created, and (2) to generate supabase/seed.sql.
 // Edit live data in /admin — this file only matters for first setup.
 
-export const TODAY = "2026-11-13";
+export const TODAY = "2026-11-17";
 
 // [name, discount %, code, affiliate url, short description, featured]
 const RAW = [

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSettings, getVendor, getVendors, lite } from "@/lib/data";
 import { buildMetadata } from "@/lib/seo";
+import { couponOverride, richCouponSchema } from "@/lib/page-seo-overrides";
 import { formatDate } from "@/lib/format";
 import { vendorFaqs, vendorH1, vendorMetaDescription, vendorMetaTitle, vendorSummary } from "@/lib/vendor-content";
 import { Breadcrumbs, FaqList, JsonLd, Markdown, faqJsonLd } from "@/components/Content";
@@ -25,8 +26,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const [settings, v] = await Promise.all([getSettings(), getVendor(slug)]);
   if (!v) return { title: "Not found", robots: { index: false } };
+  const override = couponOverride(v.slug);
   return buildMetadata({
-    settings, seo: v, path: `/coupons/${v.slug}`,
+    settings,
+    seo: override ? { ...v, ...(override.forceIndex ? { noindex: false } : {}), ...(override.keywords ? { keywords: override.keywords.join(", ") } : {}) } : v,
+    path: `/coupons/${v.slug}`,
     title: vendorMetaTitle(v),
     description: vendorMetaDescription(v),
     keywords: `${v.name} coupon code, ${v.name} discount code, ${v.name} promo code, ${v.code || ""}`,
@@ -85,10 +89,27 @@ export default async function VendorPage({ params }: Props) {
       : {}),
   };
 
+  const howToSteps = [
+    `Copy the code ${has ? v.code : ""} with the Copy button on this page.`,
+    `Open the ${v.name} store and add the research items you need to your cart.`,
+    `Paste the code in the coupon or promo-code field at checkout and press Apply.`,
+    "Confirm the discount line, shipping and final total before completing payment.",
+  ];
+  const override = couponOverride(v.slug);
+
   return (
     <>
-      <JsonLd data={webPage} />
-      <JsonLd data={faqJsonLd(faqs)} />
+      {override?.richSchema ? (
+        <>
+          <JsonLd data={richCouponSchema(v, settings, howToSteps, faqs, override.keywords)} />
+          <JsonLd data={{ ...faqJsonLd(faqs), "@id": `${pageUrl}#faq`, url: pageUrl }} />
+        </>
+      ) : (
+        <>
+          <JsonLd data={webPage} />
+          <JsonLd data={faqJsonLd(faqs)} />
+        </>
+      )}
 
       {/* HERO */}
       <section className="bg-hero relative overflow-hidden border-b border-line">
@@ -158,7 +179,7 @@ export default async function VendorPage({ params }: Props) {
       </section>
 
       {/* THE OFFER + ABOUT */}
-      <section className="bg-bone py-12 sm:py-16">
+      <section className="bg-bone py-10 sm:py-12">
         <div className="container-x">
           <div className="eyebrow" data-reveal>The offer</div>
           <h2 className="h-display mt-3 text-[32px] text-ink sm:text-[40px]" data-reveal>{v.name} coupon details</h2>
@@ -200,27 +221,26 @@ export default async function VendorPage({ params }: Props) {
               )}
             </aside>
           </div>
-          {v.about?.trim() && (
+          {v.about?.trim() ? (
             <div className="card mt-6 p-6 sm:p-10" data-reveal>
               <Markdown content={v.about} />
             </div>
-          )}
+          ) : override?.about ? (
+            <div className="card mt-6 p-6 sm:p-10" data-reveal>
+              <Markdown content={override.about(v)} className="[&>:first-child]:!mt-0" />
+            </div>
+          ) : null}
         </div>
       </section>
 
       {/* HOW TO USE */}
-      <section className="py-12 sm:py-16">
-        <div className="container-x grid grid-cols-1 gap-8 lg:grid-cols-2">
+      <section className="py-10 sm:py-12">
+        <div className="container-x grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div className="card p-6 sm:p-8" data-reveal>
             <div className="eyebrow">Step by step</div>
             <h2 className="h-display mt-3 text-[28px] text-ink sm:text-[34px]">How to use the {v.name} coupon</h2>
             <ol className="mt-6 space-y-5">
-              {[
-                `Copy the code ${has ? v.code : ""} with the Copy button on this page.`,
-                `Open the ${v.name} store and add the research items you need to your cart.`,
-                `Paste the code in the coupon or promo-code field at checkout and press Apply.`,
-                "Confirm the discount line, shipping and final total before completing payment.",
-              ].map((s, i) => (
+              {howToSteps.map((s, i) => (
                 <li key={i} className="flex gap-4">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#0b3d80] to-ink font-bold text-white shadow-[0_8px_20px_-8px_rgb(47_115_255/0.8)]">{i + 1}</span>
                   <span className="pt-2 text-[16px] leading-relaxed text-[#2b3550]">{s}</span>
@@ -242,7 +262,7 @@ export default async function VendorPage({ params }: Props) {
       </section>
 
       {/* FAQ */}
-      <section className="bg-bone py-12 sm:py-16">
+      <section className="bg-bone pb-6 pt-10 sm:pb-8 sm:pt-12">
         <div className="container-x max-w-4xl">
           <div className="eyebrow" data-reveal>FAQ</div>
           <h2 className="h-display mb-8 mt-3 text-[32px] text-ink sm:text-[40px]" data-reveal>{v.name} coupon code FAQ</h2>

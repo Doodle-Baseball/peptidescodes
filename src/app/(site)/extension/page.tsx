@@ -29,7 +29,6 @@ export default async function ExtensionPage() {
           operatingSystem: "Chrome",
           url: settings.extension_url,
           offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-          aggregateRating: { "@type": "AggregateRating", ratingValue: "5.0", ratingCount: "3" },
           publisher: { "@id": `${settings.site_url}/#organization` },
         }}
       />

@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { getPage, getPosts, getSettings, getVendors } from "@/lib/data";
 import { serverClient } from "@/lib/supabase";
 import { seedPages } from "@/data/seed-data.mjs";
+import { isForceIndexed, isPageForceIndexed } from "@/lib/page-seo-overrides";
 
 export const revalidate = 3600;
 
@@ -19,7 +20,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
   const indexable = (p: { noindex?: boolean | null; published?: boolean | null }) => !p.noindex && p.published !== false;
   const corePages = await Promise.all(coreDefs.map(([slug]) => getPage(slug)));
-  const core = coreDefs.filter((_, i) => indexable(corePages[i])).map(([, entry]) => entry);
+  const core = coreDefs
+    .filter(([slug], i) => indexable(corePages[i]) || (isPageForceIndexed(slug) && corePages[i].published !== false))
+    .map(([, entry]) => entry);
 
   const slugs = new Set<string>((seedPages as { slug: string }[]).map((p) => p.slug));
   try {
@@ -36,7 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
   return [
     ...core,
-    ...vendors.filter((v) => !v.noindex).map((v) => ({ url: `${s.site_url}/coupons/${v.slug}`, lastModified: v.updated_at || v.verified_at || undefined, changeFrequency: "weekly" as const, priority: v.coupon_active ? 0.8 : 0.5 })),
+    ...vendors.filter((v) => !v.noindex || isForceIndexed(v.slug)).map((v) => ({ url: `${s.site_url}/coupons/${v.slug}`, lastModified: v.updated_at || v.verified_at || undefined, changeFrequency: "weekly" as const, priority: v.coupon_active ? 0.8 : 0.5 })),
     ...posts.filter((p) => !p.noindex).map((p) => ({ url: `${s.site_url}/guides/${p.slug}`, lastModified: p.updated_at || p.published_at || undefined, changeFrequency: "monthly" as const, priority: 0.6 })),
     ...cms,
   ];
