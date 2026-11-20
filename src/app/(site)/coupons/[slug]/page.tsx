@@ -96,6 +96,8 @@ export default async function VendorPage({ params }: Props) {
     "Confirm the discount line, shipping and final total before completing payment.",
   ];
   const override = couponOverride(v.slug);
+  // Admin "Headline" always wins; a per-page override only fills in when it's empty.
+  const h1 = !v.headline?.trim() && override?.h1 ? override.h1(v) : vendorH1(v);
 
   return (
     <>
@@ -125,8 +127,8 @@ export default async function VendorPage({ params }: Props) {
               </div>
             </div>
             <h1 className="h-display mt-6 text-[40px] text-ink sm:text-[56px]">
-              {vendorH1(v).split(":")[0]}
-              {vendorH1(v).includes(":") && <>: <span className="text-deal">{vendorH1(v).split(":").slice(1).join(":").trim()}</span></>}
+              {h1.split(":")[0]}
+              {h1.includes(":") && <>: <span className="text-deal">{h1.split(":").slice(1).join(":").trim()}</span></>}
             </h1>
             <div className="mt-6 rounded-2xl border border-line border-l-[5px] border-l-green bg-white p-5 shadow-[var(--shadow-card)] sm:p-6">
               <Markdown content={summary} className="!text-[16.5px]" />

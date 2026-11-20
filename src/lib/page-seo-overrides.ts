@@ -73,8 +73,10 @@ export function isPageForceIndexed(slug: string) {
  * keywords:   meta keywords for the page (used instead of the default list, which includes the code).
  * about:      Markdown article shown in the content card below the offer, used only while the vendor's
  *             "About" field in the admin is empty (an admin-written About always takes priority).
+ * h1:         page heading, used only while the vendor's "Headline" field in the admin is empty.
+ *             Text after the first ":" is shown in the highlight colour.
  */
-type Override = { forceIndex?: boolean; richSchema?: boolean; keywords?: string[]; about?: (v: Vendor) => string };
+type Override = { forceIndex?: boolean; richSchema?: boolean; keywords?: string[]; about?: (v: Vendor) => string; h1?: (v: Vendor) => string };
 
 const OVERRIDES: Record<string, Override> = {
   "disguised-alpha": {
@@ -130,7 +132,187 @@ const OVERRIDES: Record<string, Override> = {
     ],
     about: heezResearchAbout,
   },
+  "nura-peptide": {
+    forceIndex: true,
+    richSchema: true,
+    keywords: ["Nura Peptide coupon code", "Nura Peptide discount code", "Nura Peptide promo code"],
+    about: nuraPeptideAbout,
+    h1: (v) => (v.coupon_active && v.code ? `${v.name} coupon code: ${v.discount_label || `${v.discount_percent}% Off`}` : `${v.name} coupon code: partner deal`),
+  },
+  "amino-science": {
+    forceIndex: true,
+    richSchema: true,
+    keywords: [
+      "Amino Science coupon code",
+      "Amino Science discount code",
+      "Amino Science promo code",
+      "Amino Science coupon",
+      "Amino Science discount",
+    ],
+    about: aminoScienceAbout,
+    h1: (v) => (v.coupon_active && v.code ? `${v.name} coupon code: ${v.discount_label || `${v.discount_percent}% Off`}` : `${v.name} coupon code: partner deal`),
+  },
+  "true-peptides": {
+    forceIndex: true,
+    richSchema: true,
+    keywords: ["True Peptides discount code", "True Peptides coupon code", "True Peptides promo code"],
+    about: truePeptidesAbout,
+  },
+  "amino-club": {
+    forceIndex: true,
+    richSchema: true,
+    keywords: ["Amino Club promo code", "Amino Club discount code", "Amino Club coupon code"],
+    about: aminoClubAbout,
+  },
+  "kalyx-labs": {
+    forceIndex: true,
+    richSchema: true,
+    keywords: ["Kalyx Labs coupon code", "Kalyx Labs discount code", "Kalyx Labs promo code"],
+    about: kalyxLabsAbout,
+  },
 };
+
+function kalyxLabsAbout(v: Vendor) {
+  const pct = v.discount_percent || 25;
+  const money = (n: number) => `$${n.toFixed(2).replace(/\.00$/, "")}`;
+  const save = (total: number) => money((total * pct) / 100);
+  const pay = (total: number) => money(total - (total * pct) / 100);
+  const code = v.code || "adamdan";
+  const verified = formatDate(v.verified_at);
+  const compounds = v.compounds || 23;
+  return `## Kalyx Labs coupon code: what you get
+
+The Kalyx Labs coupon code **${code}** gives **${pct}% off sitewide**, so it applies to your whole order. We last confirmed it at checkout on **${verified}**. Kalyx Labs is a U.S.-based research peptide supplier launched in ${v.founded || 2026}, with **${compounds} compounds** listed. At our last price check it was **below the market median on 12 of the 22 compounds** we compared, and the ${pct}% Kalyx Labs discount code comes off those prices.
+
+### How much the ${pct}% Kalyx Labs promo code saves
+
+| Order subtotal | Saving with ${code} | You pay (before shipping) |
+| --- | --- | --- |
+| $100 | ${save(100)} | ${pay(100)} |
+| $250 | ${save(250)} | ${pay(250)} |
+| $500 | ${save(500)} | ${pay(500)} |
+
+### Before you order from Kalyx Labs
+
+- **Check the discount line** covers every item after you press Apply. Use one code per order.
+- **Compare the final total**, including shipping, with other suppliers on our [peptide coupon code list](/coupons). Kalyx Labs was cheaper than the median on about half the compounds we checked, so prices vary by product. Our guide on [comparing peptide prices after a discount](/guides/compare-peptide-prices-after-discount) shows how to check.
+- **Find the COA** (certificate of analysis) for the batch you buy, and note which lab ran the test.
+
+If ${code} stops working, tell us through the contact page and we will re-check the Kalyx Labs coupon code.`;
+}
+
+function aminoClubAbout(v: Vendor) {
+  const pct = v.discount_percent || 20;
+  const money = (n: number) => `$${n.toFixed(2).replace(/\.00$/, "")}`;
+  const save = (total: number) => money((total * pct) / 100);
+  const pay = (total: number) => money(total - (total * pct) / 100);
+  const code = v.code || "PRODUCTS";
+  const verified = formatDate(v.verified_at);
+  return `## Amino Club promo code: what you get
+
+The Amino Club promo code **${code}** gives **${pct}% off sitewide**, so it applies to your whole order. We last confirmed it at checkout on **${verified}**. Amino Club is a U.S.-based research peptide supplier selling since ${v.founded || 2019}. At our last price check it was **below the market median price on all 28 compounds** we compared, so the Amino Club discount code comes off prices that are already lower than most of the market.
+
+### How much the ${pct}% Amino Club coupon code saves
+
+| Order subtotal | Saving with ${code} | You pay (before shipping) |
+| --- | --- | --- |
+| $100 | ${save(100)} | ${pay(100)} |
+| $250 | ${save(250)} | ${pay(250)} |
+| $500 | ${save(500)} | ${pay(500)} |
+
+### Before you order from Amino Club
+
+- **Check the discount line** covers every item after you press Apply. Use one code per order.
+- **Compare the final total**, including shipping, with other suppliers on our [peptide coupon code list](/coupons). Below-median prices mean Amino Club was cheaper than most stores we checked, not always the cheapest. Our guide on [comparing peptide prices after a discount](/guides/compare-peptide-prices-after-discount) shows how to check.
+- **Find the COA** (certificate of analysis) for the batch you buy, and note which lab ran the test.
+
+If ${code} stops working, tell us through the contact page and we will re-check the Amino Club promo code.`;
+}
+
+function truePeptidesAbout(v: Vendor) {
+  const pct = v.discount_percent || 10;
+  const money = (n: number) => `$${n.toFixed(2).replace(/\.00$/, "")}`;
+  const save = (total: number) => money((total * pct) / 100);
+  const pay = (total: number) => money(total - (total * pct) / 100);
+  const code = v.code || "PEPLOOKUP";
+  const verified = formatDate(v.verified_at);
+  return `## True Peptides discount code: what you get
+
+The True Peptides discount code **${code}** gives **${pct}% off sitewide**, so it applies to your whole order. We last confirmed it at checkout on **${verified}**. True Peptides is a U.S.-based research peptide supplier selling since ${v.founded || 2025}. Its list prices sit above the market median on most compounds we compared, so using the True Peptides coupon code on every order helps narrow that gap.
+
+### How much the ${pct}% True Peptides coupon code saves
+
+| Order subtotal | Saving with ${code} | You pay (before shipping) |
+| --- | --- | --- |
+| $100 | ${save(100)} | ${pay(100)} |
+| $250 | ${save(250)} | ${pay(250)} |
+| $500 | ${save(500)} | ${pay(500)} |
+
+### Before you order from True Peptides
+
+- **Check the discount line** covers every item after you press Apply. Use one code per order.
+- **Compare the final total**, including shipping, with other suppliers on our [peptide coupon code list](/coupons). Because True Peptides starts from higher prices, ${pct}% off may not always be the lowest total. Our guide on [comparing peptide prices after a discount](/guides/compare-peptide-prices-after-discount) shows how to check.
+- **Find the COA** (certificate of analysis) for the batch you buy, and note which lab ran the test.
+
+If ${code} stops working, tell us through the contact page and we will re-check the True Peptides discount code.`;
+}
+
+function aminoScienceAbout(v: Vendor) {
+  const pct = v.discount_percent || 20;
+  const money = (n: number) => `$${n.toFixed(2).replace(/\.00$/, "")}`;
+  const save = (total: number) => money((total * pct) / 100);
+  const pay = (total: number) => money(total - (total * pct) / 100);
+  const code = v.code || "PRODUCTS";
+  const verified = formatDate(v.verified_at);
+  const coas = v.coa_count || 24;
+  return `## Amino Science coupon code: what you get
+
+The Amino Science coupon code **${code}** gives **${pct}% off sitewide**, so it applies to your whole order. We last confirmed it at checkout on **${verified}**. Amino Science is a U.S.-based research peptide supplier that links **${coas} COA reports** (lab test results). Its list prices sit above the market median, so applying the ${pct}% Amino Science discount code on every order helps close that gap.
+
+### How much the ${pct}% Amino Science discount saves
+
+| Order subtotal | Saving with ${code} | You pay (before shipping) |
+| --- | --- | --- |
+| $100 | ${save(100)} | ${pay(100)} |
+| $250 | ${save(250)} | ${pay(250)} |
+| $500 | ${save(500)} | ${pay(500)} |
+
+### Before you order from Amino Science
+
+- **Check the discount line** covers every item after you press Apply. Use one code per order.
+- **Compare the final total**, including shipping, with other suppliers on our [peptide coupon code list](/coupons). Because Amino Science starts from higher prices, our guide on [comparing peptide prices after a discount](/guides/compare-peptide-prices-after-discount) shows how to check you're getting a good deal.
+- **Find the COA** for the batch you buy among the ${coas} published reports, and note which lab ran the test.
+
+If ${code} stops working, tell us through the contact page and we will re-check the Amino Science promo code.`;
+}
+
+function nuraPeptideAbout(v: Vendor) {
+  const pct = v.discount_percent || 20;
+  const money = (n: number) => `$${n.toFixed(2).replace(/\.00$/, "")}`;
+  const save = (total: number) => money((total * pct) / 100);
+  const pay = (total: number) => money(total - (total * pct) / 100);
+  const code = v.code || "PEPLOOKUP";
+  const verified = formatDate(v.verified_at);
+  return `## Nura Peptide coupon code: what you get
+
+The Nura Peptide coupon code **${code}** gives **${pct}% off sitewide**, so it covers your whole order of vials, capsules or nasal sprays. We last confirmed it at checkout on **${verified}**. Nura Peptide is a U.S.-based research peptide supplier, and its products are for laboratory use only.
+
+### How much the ${pct}% Nura Peptide discount saves
+
+| Order subtotal | Saving with ${code} | You pay (before shipping) |
+| --- | --- | --- |
+| $100 | ${save(100)} | ${pay(100)} |
+| $250 | ${save(250)} | ${pay(250)} |
+| $500 | ${save(500)} | ${pay(500)} |
+
+### Before you order from Nura Peptide
+
+- **Check the discount line** covers every item after you press Apply. Use one code per order.
+- **Compare the final total**, including shipping, with other suppliers on our [peptide coupon code list](/coupons). Our guide on [comparing peptide prices after a discount](/guides/compare-peptide-prices-after-discount) shows how.
+- **Find the COA** (certificate of analysis) for the batch you buy, and note which lab ran the test.
+
+If ${code} stops working, tell us through the contact page and we will re-check the Nura Peptide promo code.`;
+}
 
 function heezResearchAbout(v: Vendor) {
   const pct = v.discount_percent || 15;
