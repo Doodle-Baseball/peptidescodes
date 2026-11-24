@@ -23,8 +23,8 @@ import Link from "next/link";
 import type { VendorLite } from "@/lib/types";
 import { shortDate } from "@/lib/format";
 import { VendorLogo } from "./VendorLogo";
-import { useDeal } from "./Deal";
-import { IconChevronLeft, IconChevronRight, IconCopy } from "./Icons";
+import { useCopyCode, useDeal } from "./Deal";
+import { IconCheck, IconChevronLeft, IconChevronRight, IconCopy } from "./Icons";
 
 /** 3D stacked deck of featured coupon cards in the navy "panel" style. */
 export function HeroCarousel({ items }: { items: VendorLite[] }) {
@@ -33,6 +33,7 @@ export function HeroCarousel({ items }: { items: VendorLite[] }) {
   const [paused, setPaused] = useState(false);
   const stage = useRef<HTMLDivElement>(null);
   const { open } = useDeal();
+  const { copiedSlug, copyCode } = useCopyCode();
   const n = items.length;
   const go = useCallback((d: number) => { setDir(d >= 0 ? 1 : -1); setI((x) => (x + d + n) % n); }, [n]);
   const jump = (idx: number) => { setDir(idx >= i ? 1 : -1); setI(idx); };
@@ -110,7 +111,7 @@ export function HeroCarousel({ items }: { items: VendorLite[] }) {
                   {v.code ? (
                     <button
                       type="button"
-                      onClick={() => open(v, { source: "hero" })}
+                      onClick={() => copyCode(v, "hero")}
                       className="group/tk relative flex min-w-0 flex-1 items-stretch overflow-visible rounded-2xl bg-white text-left shadow-[0_1px_0_#fff_inset,0_16px_30px_-18px_rgb(8_30_76/0.55)] transition hover:-translate-y-0.5"
                       aria-label={`Copy ${v.name} code ${v.code}`}
                     >
@@ -125,9 +126,9 @@ export function HeroCarousel({ items }: { items: VendorLite[] }) {
                       </span>
                       <span className="flex flex-col items-center justify-center gap-1 px-2.5 sm:px-3.5">
                         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-green text-white transition group-hover/tk:scale-105">
-                          <IconCopy size={16} />
+                          {copiedSlug === v.slug ? <IconCheck size={16} /> : <IconCopy size={16} />}
                         </span>
-                        <span className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-green">Copy</span>
+                        <span className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-green">{copiedSlug === v.slug ? "Copied!" : "Copy"}</span>
                       </span>
                     </button>
                   ) : (

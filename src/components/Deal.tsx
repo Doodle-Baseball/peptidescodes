@@ -1,15 +1,38 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { VendorLite } from "@/lib/types";
 import { browserClient } from "@/lib/supabase";
 import { VendorLogo } from "./VendorLogo";
 import { IconArrowUpRight, IconCheck, IconCopy, IconX } from "./Icons";
 
-type Ctx = { open: (v: VendorLite, opts?: { go?: boolean; source?: string }) => void };
-const DealCtx = createContext<Ctx>({ open: () => {} });
+type Ctx = {
+  open: (v: VendorLite, opts?: { go?: boolean; source?: string }) => void;
+  /** Copies the code (and tracks the click) without opening the deal popup. */
+  copy: (v: VendorLite, source?: string) => Promise<boolean>;
+};
+const DealCtx = createContext<Ctx>({ open: () => {}, copy: async () => false });
 export const useDeal = () => useContext(DealCtx);
+
+/** Copy a code with no popup. `copiedSlug` holds the copied vendor's slug for 2 seconds, for a "Copied!" label. */
+export function useCopyCode() {
+  const { copy } = useDeal();
+  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  const copyCode = useCallback(
+    (v: VendorLite, source?: string) =>
+      copy(v, source).then((ok) => {
+        if (!ok) return;
+        setCopiedSlug(v.slug);
+        clearTimeout(timer.current);
+        timer.current = setTimeout(() => setCopiedSlug(null), 2000);
+      }),
+    [copy],
+  );
+  return { copiedSlug, copyCode };
+}
 
 async function copyText(text: string) {
   try {
@@ -52,6 +75,12 @@ export function DealProvider({ children }: { children: React.ReactNode }) {
     setDeal(v);
   }, []);
 
+  const copy = useCallback(async (v: VendorLite, source?: string) => {
+    if (!v.code) return false;
+    track(v, "copy", source);
+    return copyText(v.code);
+  }, []);
+
   useEffect(() => {
     if (!deal) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setDeal(null);
@@ -65,7 +94,7 @@ export function DealProvider({ children }: { children: React.ReactNode }) {
   }, [deal]);
 
   return (
-    <DealCtx.Provider value={{ open }}>
+    <DealCtx.Provider value={{ open, copy }}>
       {children}
       {deal && (
         <div className="animate-fade fixed inset-0 z-[100] flex items-end justify-center bg-ink/55 p-3 backdrop-blur-sm sm:items-center" onClick={() => setDeal(null)} role="presentation">
@@ -128,16 +157,17 @@ export function DealProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Dashed code + green Copy button. Copies the code and shows the deal modal. */
+/** Dashed code + green Copy button. Copies the code and briefly shows "Copied!" (no popup). */
 export function CodeChip({ v, size = "md", source }: { v: VendorLite; size?: "sm" | "md" | "lg"; source?: string }) {
-  const { open } = useDeal();
+  const { copiedSlug, copyCode } = useCopyCode();
   if (!v.code) return <span className="pill pill-sky">No code needed</span>;
   const pad = size === "lg" ? "text-[16px] !py-3 !px-5" : size === "sm" ? "!text-[12.5px] !py-1.5 !px-2.5" : "";
+  const copied = copiedSlug === v.slug;
   return (
     <span className="code-chip">
       <span className={`code ${pad}`}>{v.code}</span>
-      <button type="button" onClick={() => open(v, { source })} aria-label={`Copy ${v.name} coupon code ${v.code}`}>
-        <IconCopy size={15} /> Copy
+      <button type="button" onClick={() => copyCode(v, source)} aria-label={`Copy ${v.name} coupon code ${v.code}`}>
+        {copied ? <IconCheck size={15} /> : <IconCopy size={15} />} {copied ? "Copied!" : "Copy"}
       </button>
     </span>
   );

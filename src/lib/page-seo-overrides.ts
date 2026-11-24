@@ -75,8 +75,18 @@ export function isPageForceIndexed(slug: string) {
  *             "About" field in the admin is empty (an admin-written About always takes priority).
  * h1:         page heading, used only while the vendor's "Headline" field in the admin is empty.
  *             Text after the first ":" is shown in the highlight colour.
+ * extraFaqs:  FAQs added after the page's FAQs (questions already in the list are skipped).
+ * meta:       unique meta title / description for this page (the admin "Meta title" / "Meta description" fields still win when set).
  */
-type Override = { forceIndex?: boolean; richSchema?: boolean; keywords?: string[]; about?: (v: Vendor) => string; h1?: (v: Vendor) => string };
+type Override = {
+  meta?: (v: Vendor) => { title: string; description: string };
+  forceIndex?: boolean;
+  richSchema?: boolean;
+  keywords?: string[];
+  about?: (v: Vendor) => string;
+  h1?: (v: Vendor) => string;
+  extraFaqs?: (v: Vendor) => Faq[];
+};
 
 const OVERRIDES: Record<string, Override> = {
   "disguised-alpha": {
@@ -170,7 +180,238 @@ const OVERRIDES: Record<string, Override> = {
     keywords: ["Kalyx Labs coupon code", "Kalyx Labs discount code", "Kalyx Labs promo code"],
     about: kalyxLabsAbout,
   },
+  msamino: {
+    forceIndex: true,
+    richSchema: true,
+    keywords: ["MsAmino coupon code", "MsAmino discount code"],
+    about: msAminoAbout,
+  },
+  "pepvida-labs": {
+    forceIndex: true,
+    richSchema: true,
+    keywords: ["Pepvida Labs coupon code", "Pepvida Labs discount code"],
+    about: pepvidaLabsAbout,
+  },
+  "ascension-peptides": {
+    forceIndex: true,
+    richSchema: true,
+    keywords: ["Ascension Peptides coupon code", "Ascension Peptides discount code"],
+    about: ascensionPeptidesAbout,
+    extraFaqs: (v) => {
+      const pct = v.discount_percent || 50;
+      const code = v.code || "products";
+      return [
+        {
+          q: `What is the Ascension Peptides coupon code for ${pct}% off?`,
+          a: `The Ascension Peptides coupon code is ${code}. It takes ${pct}% off sitewide, so it applies to your whole order, and we last confirmed it at checkout on ${formatDate(v.verified_at)}. Enter it in lowercase exactly as shown, or use the Copy button on this page.`,
+        },
+        {
+          q: "Is the Ascension Peptides discount code worth using?",
+          a: `Yes. Ascension Peptides has been selling since ${v.founded || 2023}, and its list prices sit above the market median on most compounds we compared. The ${pct}% Ascension Peptides discount code closes much of that gap, but compare your final total, including shipping, with other suppliers before you order.`,
+        },
+      ];
+    },
+  },
+  "pure-amino": {
+    meta: (v) => {
+      const pct = v.discount_percent || 20;
+      const code = v.code || "PRODUCTS";
+      const month = v.verified_at ? new Date(v.verified_at).toLocaleString("en-US", { month: "short", year: "numeric", timeZone: "UTC" }) : "";
+      return {
+        title: `Pure Amino Coupon Code: ${pct}% Off Sitewide${month ? ` (${month})` : ""}`,
+        description: `Get ${pct}% off sitewide at Pure Amino with coupon code ${code}. Verified ${formatDate(v.verified_at)}.`,
+      };
+    },
+    forceIndex: true,
+    richSchema: true,
+    keywords: ["Pure Amino coupon code", "Pure Amino discount code"],
+    about: pureAminoAbout,
+    extraFaqs: (v) => {
+      const pct = v.discount_percent || 20;
+      const code = v.code || "PRODUCTS";
+      return [
+        {
+          q: `What is the Pure Amino coupon code for ${pct}% off?`,
+          a: `The Pure Amino coupon code is ${code}. It takes ${pct}% off sitewide, so it applies to your whole order, and we last confirmed it at checkout on ${formatDate(v.verified_at)}. Use the Copy button on this page and paste it into the discount field at checkout.`,
+        },
+        {
+          q: "Is Pure Amino cheaper with the discount code?",
+          a: `Often, but not on every product. At our last check Pure Amino was below the market median price on 6 of the ${v.compounds || 11} compounds it lists, and the ${pct}% Pure Amino discount code comes off those prices. Compare your final total, including shipping, with other suppliers before you order.`,
+        },
+      ];
+    },
+  },
+  "vortex-research": {
+    meta: (v) => {
+      const pct = v.discount_percent || 30;
+      const code = v.code || "adamadam";
+      const month = v.verified_at ? new Date(v.verified_at).toLocaleString("en-US", { month: "short", year: "numeric", timeZone: "UTC" }) : "";
+      return {
+        title: `Vortex Research Coupon Code: Save ${pct}% Sitewide${month ? ` (${month})` : ""}`,
+        description: `Vortex Research coupon code ${code} takes ${pct}% off your whole order. Checked ${formatDate(v.verified_at)}.`,
+      };
+    },
+    forceIndex: true,
+    richSchema: true,
+    keywords: ["Vortex Research coupon code", "Vortex Research discount code"],
+    about: vortexResearchAbout,
+    extraFaqs: (v) => {
+      const pct = v.discount_percent || 30;
+      const code = v.code || "adamadam";
+      const coas = v.coa_count || 10;
+      const products = v.compounds || 21;
+      return [
+        {
+          q: `What is the Vortex Research coupon code for ${pct}% off?`,
+          a: `Use ${code} at checkout. It is a lowercase code that takes ${pct}% off sitewide at Vortex Research, and it worked when we last tested it on ${formatDate(v.verified_at)}.`,
+        },
+        {
+          q: "Does Vortex Research publish COA reports?",
+          a: `Yes. At our last check Vortex Research linked ${coas} COA reports across its ${products} products. Make sure there is a report for the exact product and batch you buy before you apply the Vortex Research discount code and pay.`,
+        },
+      ];
+    },
+  },
 };
+
+function vortexResearchAbout(v: Vendor) {
+  const pct = v.discount_percent || 30;
+  const money = (n: number) => `$${n.toFixed(2).replace(/\.00$/, "")}`;
+  const save = (total: number) => money((total * pct) / 100);
+  const pay = (total: number) => money(total - (total * pct) / 100);
+  const code = v.code || "adamadam";
+  const verified = formatDate(v.verified_at);
+  const coas = v.coa_count || 10;
+  const products = v.compounds || 21;
+  return `## Vortex Research coupon code: what you get
+
+At **${pct}% off sitewide**, the Vortex Research coupon code **${code}** is one of the bigger discounts on our list, and we confirmed it at checkout on **${verified}**. Vortex Research is a newer U.S. supplier, launched in ${v.founded || 2026}, with a compact range of **${products} products** and **${coas} linked COA reports** you can review before you buy.
+
+### How much the ${pct}% Vortex Research promo code saves
+
+| Order subtotal | Saving with ${code} | You pay (before shipping) |
+| --- | --- | --- |
+| $100 | ${save(100)} | ${pay(100)} |
+| $250 | ${save(250)} | ${pay(250)} |
+| $500 | ${save(500)} | ${pay(500)} |
+
+### Before you order from Vortex Research
+
+- **Weigh the ${pct}% against the final price.** A large percentage only helps if the end total is competitive, so check the same items on our [peptide coupon code list](/coupons) and follow our guide to [comparing peptide prices after a discount](/guides/compare-peptide-prices-after-discount).
+- **Match a COA to your batch.** With ${coas} reports across ${products} products, not every item may have one yet, so confirm before you order, and use one code per order.
+
+If ${code} is rejected at checkout, reach out through the contact page and we will re-test the Vortex Research coupon code.`;
+}
+
+function pureAminoAbout(v: Vendor) {
+  const pct = v.discount_percent || 20;
+  const money = (n: number) => `$${n.toFixed(2).replace(/\.00$/, "")}`;
+  const save = (total: number) => money((total * pct) / 100);
+  const pay = (total: number) => money(total - (total * pct) / 100);
+  const code = v.code || "PRODUCTS";
+  const verified = formatDate(v.verified_at);
+  const compounds = v.compounds || 11;
+  return `## Pure Amino coupon code: what you get
+
+Code **${code}** takes **${pct}% off everything at Pure Amino**, and it worked when we last tested it at checkout on **${verified}**. Pure Amino has sold research peptides from the United States since ${v.founded || 2015}, longer than most stores we track, and keeps a focused catalog of **${compounds} compounds**. In our last price comparison, **6 of those ${compounds} came in below the market median** before the Pure Amino discount code was even applied.
+
+### How much the ${pct}% Pure Amino promo code saves
+
+| Order subtotal | Saving with ${code} | You pay (before shipping) |
+| --- | --- | --- |
+| $100 | ${save(100)} | ${pay(100)} |
+| $250 | ${save(250)} | ${pay(250)} |
+| $500 | ${save(500)} | ${pay(500)} |
+
+### Before you order from Pure Amino
+
+- **Price-check your exact basket.** With 6 of ${compounds} compounds under the median, your saving depends on what you buy. Line up the same items at other stores on our [peptide coupon code list](/coupons), and use our guide to [comparing peptide prices after a discount](/guides/compare-peptide-prices-after-discount) to work out the real price per mg.
+- **Ask for the batch COA** before you pay, and apply only one code per order.
+
+Code not taking ${pct}% off? Let us know through the contact page and we will test the Pure Amino coupon code again.`;
+}
+
+function ascensionPeptidesAbout(v: Vendor) {
+  const pct = v.discount_percent || 50;
+  const money = (n: number) => `$${n.toFixed(2).replace(/\.00$/, "")}`;
+  const save = (total: number) => money((total * pct) / 100);
+  const pay = (total: number) => money(total - (total * pct) / 100);
+  const code = v.code || "products";
+  const verified = formatDate(v.verified_at);
+  return `## Ascension Peptides coupon code: what you get
+
+The Ascension Peptides coupon code **${code}** gives **${pct}% off sitewide**, last confirmed at checkout on **${verified}**. Ascension Peptides is a U.S. research peptide supplier selling since ${v.founded || 2023}. Its list prices sit above the market median on most compounds we compared, so the ${pct}% Ascension Peptides discount code makes a big difference on every order.
+
+### How much the ${pct}% Ascension Peptides promo code saves
+
+| Order subtotal | Saving with ${code} | You pay (before shipping) |
+| --- | --- | --- |
+| $100 | ${save(100)} | ${pay(100)} |
+| $250 | ${save(250)} | ${pay(250)} |
+| $500 | ${save(500)} | ${pay(500)} |
+
+### Before you order from Ascension Peptides
+
+- **Compare the final total**, including shipping, with other suppliers on our [peptide coupon code list](/coupons). Our guide on [comparing peptide prices after a discount](/guides/compare-peptide-prices-after-discount) shows how.
+- **Find the COA** for the batch you buy, and use one code per order.
+
+If ${code} stops working, tell us through the contact page and we will re-check the Ascension Peptides coupon code.`;
+}
+
+function msAminoAbout(v: Vendor) {
+  const pct = v.discount_percent || 20;
+  const money = (n: number) => `$${n.toFixed(2).replace(/\.00$/, "")}`;
+  const save = (total: number) => money((total * pct) / 100);
+  const pay = (total: number) => money(total - (total * pct) / 100);
+  const code = v.code || "W9QVLNLY";
+  const verified = formatDate(v.verified_at);
+  const coas = v.coa_count || 32;
+  return `## MsAmino coupon code: what you get
+
+The MsAmino coupon code **${code}** gives **${pct}% off sitewide**, last confirmed at checkout on **${verified}**. MsAmino is a U.S. research peptide supplier launched in ${v.founded || 2026}. It links **${coas} COA reports**, but its prices sit above the market median, so the MsAmino discount code is worth using on every order.
+
+### How much the ${pct}% MsAmino promo code saves
+
+| Order subtotal | Saving with ${code} | You pay (before shipping) |
+| --- | --- | --- |
+| $100 | ${save(100)} | ${pay(100)} |
+| $250 | ${save(250)} | ${pay(250)} |
+| $500 | ${save(500)} | ${pay(500)} |
+
+### Before you order from MsAmino
+
+- **Compare the final total**, including shipping, with other suppliers on our [peptide coupon code list](/coupons). Our guide on [comparing peptide prices after a discount](/guides/compare-peptide-prices-after-discount) shows how.
+- **Find the COA** for the batch you buy, and use one code per order.
+
+If ${code} stops working, tell us through the contact page and we will re-check the MsAmino coupon code.`;
+}
+
+function pepvidaLabsAbout(v: Vendor) {
+  const pct = v.discount_percent || 20;
+  const money = (n: number) => `$${n.toFixed(2).replace(/\.00$/, "")}`;
+  const save = (total: number) => money((total * pct) / 100);
+  const pay = (total: number) => money(total - (total * pct) / 100);
+  const code = v.code || "PEPLOOKUP";
+  const verified = formatDate(v.verified_at);
+  return `## Pepvida Labs coupon code: what you get
+
+The Pepvida Labs coupon code **${code}** gives **${pct}% off sitewide**, last confirmed at checkout on **${verified}**. Pepvida Labs is a U.S. research peptide supplier selling since ${v.founded || 2025}. At our last check it was **below the market median price on 18 of the 23 compounds** we compared, so the Pepvida Labs discount code comes off prices that are already lower than most of the market.
+
+### How much the ${pct}% Pepvida Labs promo code saves
+
+| Order subtotal | Saving with ${code} | You pay (before shipping) |
+| --- | --- | --- |
+| $100 | ${save(100)} | ${pay(100)} |
+| $250 | ${save(250)} | ${pay(250)} |
+| $500 | ${save(500)} | ${pay(500)} |
+
+### Before you order from Pepvida Labs
+
+- **Compare the final total**, including shipping, with other suppliers on our [peptide coupon code list](/coupons). Our guide on [comparing peptide prices after a discount](/guides/compare-peptide-prices-after-discount) shows how.
+- **Find the COA** for the batch you buy, and use one code per order.
+
+If ${code} stops working, tell us through the contact page and we will re-check the Pepvida Labs coupon code.`;
+}
 
 function kalyxLabsAbout(v: Vendor) {
   const pct = v.discount_percent || 25;
@@ -478,8 +719,10 @@ export function richCouponSchema(v: Vendor, settings: Settings, howToSteps: stri
   const offerId = `${pageUrl}#offer`;
   const logo = v.logo_url ? (v.logo_url.startsWith("/") ? `${site}${v.logo_url}` : v.logo_url) : undefined;
   const image = ogImageUrl(settings, `${v.name} coupon code`, has ? `${v.discount_label} with code ${v.code} · verified ${formatDate(v.verified_at)}` : "Partner deal");
-  const title = vendorMetaTitle(v);
-  const description = vendorMetaDescription(v);
+  // Mirror the page's <title>/<meta description>: admin fields first, then the per-page override, then the template.
+  const meta = OVERRIDES[v.slug]?.meta?.(v);
+  const title = v.meta_title?.trim() || meta?.title || vendorMetaTitle(v);
+  const description = v.meta_description?.trim() || meta?.description || vendorMetaDescription(v);
 
   const vendor = {
     "@type": "Organization",

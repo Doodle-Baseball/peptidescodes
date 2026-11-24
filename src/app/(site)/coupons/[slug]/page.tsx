@@ -27,12 +27,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const [settings, v] = await Promise.all([getSettings(), getVendor(slug)]);
   if (!v) return { title: "Not found", robots: { index: false } };
   const override = couponOverride(v.slug);
+  const meta = override?.meta?.(v);
   return buildMetadata({
     settings,
     seo: override ? { ...v, ...(override.forceIndex ? { noindex: false } : {}), ...(override.keywords ? { keywords: override.keywords.join(", ") } : {}) } : v,
     path: `/coupons/${v.slug}`,
-    title: vendorMetaTitle(v),
-    description: vendorMetaDescription(v),
+    title: meta?.title || vendorMetaTitle(v),
+    description: meta?.description || vendorMetaDescription(v),
     keywords: `${v.name} coupon code, ${v.name} discount code, ${v.name} promo code, ${v.code || ""}`,
     ogTitle: `${v.name} coupon code`,
     ogSub: v.coupon_active && v.code ? `${v.discount_label} with code ${v.code} · verified ${formatDate(v.verified_at)}` : "Partner deal",
@@ -47,7 +48,10 @@ export default async function VendorPage({ params }: Props) {
 
   const L = lite(v);
   const has = v.coupon_active && !!v.code;
-  const faqs = vendorFaqs(v);
+  const override = couponOverride(v.slug);
+  // Pages with extra FAQs also drop blank admin FAQ rows (empty question), which would be invalid FAQ schema.
+  const baseFaqs = override?.extraFaqs ? vendorFaqs(v).filter((f) => f.q?.trim()) : vendorFaqs(v);
+  const faqs = [...baseFaqs, ...(override?.extraFaqs?.(v) ?? []).filter((f) => !baseFaqs.some((b) => b.q === f.q))];
   const summary = vendorSummary(v);
   const related = all
     .filter((x) => x.slug !== v.slug && x.coupon_active && x.code)
@@ -95,7 +99,6 @@ export default async function VendorPage({ params }: Props) {
     `Paste the code in the coupon or promo-code field at checkout and press Apply.`,
     "Confirm the discount line, shipping and final total before completing payment.",
   ];
-  const override = couponOverride(v.slug);
   // Admin "Headline" always wins; a per-page override only fills in when it's empty.
   const h1 = !v.headline?.trim() && override?.h1 ? override.h1(v) : vendorH1(v);
 
