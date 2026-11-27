@@ -77,8 +77,10 @@ export function isPageForceIndexed(slug: string) {
  *             Text after the first ":" is shown in the highlight colour.
  * extraFaqs:  FAQs added after the page's FAQs (questions already in the list are skipped).
  * meta:       unique meta title / description for this page (the admin "Meta title" / "Meta description" fields still win when set).
+ * selectFaqs: choose which FAQs the page shows, and in what order (FAQ list and FAQ schema).
  */
 type Override = {
+  selectFaqs?: (faqs: Faq[], v: Vendor) => Faq[];
   meta?: (v: Vendor) => { title: string; description: string };
   forceIndex?: boolean;
   richSchema?: boolean;
@@ -272,7 +274,349 @@ const OVERRIDES: Record<string, Override> = {
       ];
     },
   },
+  aminovault: {
+    meta: (v) => {
+      const pct = v.discount_percent || 15;
+      const code = v.code || "PEPLOOKUP";
+      const month = v.verified_at ? new Date(v.verified_at).toLocaleString("en-US", { month: "short", year: "numeric", timeZone: "UTC" }) : "";
+      return {
+        title: `AminoVault Coupon Code${month ? ` (${month})` : ""}: Get ${pct}% Off Every Order`,
+        description: `Save ${pct}% at AminoVault with coupon code ${code}, tested at checkout ${formatDate(v.verified_at)}. Works sitewide on research peptide orders.`,
+      };
+    },
+    forceIndex: true,
+    richSchema: true,
+    keywords: ["AminoVault coupon code", "AminoVault discount code"],
+    about: aminoVaultAbout,
+    // Show only these 5 FAQs, in this order. If FAQs are written in the admin, those are shown unchanged instead.
+    selectFaqs: (faqs, v) => {
+      if (v.faqs?.some((f) => f.q?.trim())) return faqs;
+      const pick = [/coupon code for \d+% off\?$/, /discount code for first orders\?$/, /coupon code working\?$/, /legit\?$/, /COA reports/];
+      const picked = pick.map((re) => faqs.find((f) => re.test(f.q))).filter((f): f is Faq => !!f);
+      return picked.length ? picked : faqs;
+    },
+    extraFaqs: (v) => {
+      const pct = v.discount_percent || 15;
+      const code = v.code || "PEPLOOKUP";
+      const coas = v.coa_count || 4;
+      return [
+        {
+          q: `What is the AminoVault coupon code for ${pct}% off?`,
+          a: `The AminoVault coupon code is ${code}, typed in capital letters. It takes ${pct}% off sitewide, so every product in your cart is discounted, and we last saw it apply at checkout on ${formatDate(v.verified_at)}.`,
+        },
+        {
+          q: "How many COA reports does AminoVault publish?",
+          a: `At our last check AminoVault linked ${coas} COA reports. That is a short list, so if your product or batch isn't covered, ask AminoVault for the certificate of analysis before you apply the AminoVault discount code and pay.`,
+        },
+      ];
+    },
+  },
+  "peptixa-labs": {
+    meta: (v) => {
+      const pct = v.discount_percent || 15;
+      const code = v.code || "ADAMD";
+      return {
+        title: `Peptixa Labs Coupon Code: ${pct}% Off + COA on Every Product`,
+        description: `Use Peptixa Labs coupon code ${code} for ${pct}% off all ${v.compounds || 9} products. Every compound has a COA. Code tested at checkout ${formatDate(v.verified_at)}.`,
+      };
+    },
+    forceIndex: true,
+    richSchema: true,
+    keywords: ["Peptixa Labs coupon code", "Peptixa Labs discount code"],
+    about: peptixaLabsAbout,
+    // Show only these 5 FAQs, in this order. If FAQs are written in the admin, those are shown unchanged instead.
+    selectFaqs: (faqs, v) => {
+      if (v.faqs?.some((f) => f.q?.trim())) return faqs;
+      const pick = [/^What is the Peptixa Labs coupon code\?$/, /discount code work on every product\?$/, /COA for every product\?$/, /coupon code working\?$/, /legit\?$/];
+      const picked = pick.map((re) => faqs.find((f) => re.test(f.q))).filter((f): f is Faq => !!f);
+      return picked.length ? picked : faqs;
+    },
+    extraFaqs: (v) => {
+      const pct = v.discount_percent || 15;
+      const code = v.code || "ADAMD";
+      const products = v.compounds || 9;
+      return [
+        {
+          q: "What is the Peptixa Labs coupon code?",
+          a: `The Peptixa Labs coupon code is ${code}. It takes ${pct}% off sitewide and was working when we tested it at checkout on ${formatDate(v.verified_at)}. It is five capital letters, so paste it with the Copy button rather than typing it.`,
+        },
+        {
+          q: "Does the Peptixa Labs discount code work on every product?",
+          a: `Yes. ${code} is a sitewide code, so the ${pct}% Peptixa Labs discount applies to all ${products} products in its range. Put everything you need in one cart, because stores usually accept one code per order.`,
+        },
+        {
+          q: "Does Peptixa Labs have a COA for every product?",
+          a: `At our last check, yes. Peptixa Labs links a certificate of analysis (COA) for every compound it sells, which is less common than you might expect. Before you buy, open the report and check that its batch number matches the product you are ordering.`,
+        },
+      ];
+    },
+  },
+  "elite-research-lab": {
+    meta: (v) => {
+      const pct = v.discount_percent || 10;
+      const code = v.code || "adamdan";
+      return {
+        title: `Elite Research Lab Coupon Code: ${pct}% Off All ${v.compounds || 25} Compounds`,
+        description: `Elite Research Lab coupon code ${code} takes ${pct}% off sitewide, tested ${formatDate(v.verified_at)}. See real savings and how its prices compare.`,
+      };
+    },
+    forceIndex: true,
+    richSchema: true,
+    keywords: ["Elite Research Lab coupon code", "Elite Research Lab discount code"],
+    about: eliteResearchLabAbout,
+    // Show only these 5 FAQs, in this order. If FAQs are written in the admin, those are shown unchanged instead.
+    selectFaqs: (faqs, v) => {
+      if (v.faqs?.some((f) => f.q?.trim())) return faqs;
+      const pick = [/^What is the Elite Research Lab coupon code\?$/, /same as Elite Edge Biotech\?$/, /prices compare with the discount code\?$/, /coupon code working\?$/, /legit\?$/];
+      const picked = pick.map((re) => faqs.find((f) => re.test(f.q))).filter((f): f is Faq => !!f);
+      return picked.length ? picked : faqs;
+    },
+    extraFaqs: (v) => {
+      const pct = v.discount_percent || 10;
+      const code = v.code || "adamdan";
+      const compounds = v.compounds || 25;
+      return [
+        {
+          q: "What is the Elite Research Lab coupon code?",
+          a: `The Elite Research Lab coupon code is ${code}, all in lowercase. It takes ${pct}% off sitewide, and it applied correctly when we tested it at checkout on ${formatDate(v.verified_at)}.`,
+        },
+        {
+          q: "Is Elite Research Lab the same as Elite Edge Biotech?",
+          a: `No. They are two separate U.S. research peptide stores with similar names, and each has its own code. ${code} is for Elite Research Lab only, so it will not work at Elite Edge Biotech, and the Elite Edge Biotech code will not work here.`,
+        },
+        {
+          q: "How do Elite Research Lab prices compare with the discount code?",
+          a: `It depends on the product. At our last check Elite Research Lab was below the market median on 13 of the ${compounds} compounds we compared, so about half its range is already cheaper than typical, and the ${pct}% Elite Research Lab discount code comes off those prices. For the rest, compare your final total with other suppliers before you order.`,
+        },
+      ];
+    },
+  },
+  "void-research": {
+    meta: (v) => {
+      const pct = v.discount_percent || 10;
+      const code = v.code || "PEPLOOKUP";
+      const month = v.verified_at ? new Date(v.verified_at).toLocaleString("en-US", { month: "short", year: "numeric", timeZone: "UTC" }) : "";
+      return {
+        title: `Void Research Coupon Code ${code}: ${pct}% Off${month ? ` (${month})` : ""}`,
+        description: `Save ${pct}% at Void Research with code ${code}, tested ${formatDate(v.verified_at)}. Works sitewide on all ${v.compounds || 27} compounds. See savings and a price check.`,
+      };
+    },
+    forceIndex: true,
+    richSchema: true,
+    keywords: ["Void Research coupon code", "Void Research discount code"],
+    about: voidResearchAbout,
+    // Show only these 5 FAQs, in this order. If FAQs are written in the admin, those are shown unchanged instead.
+    selectFaqs: (faqs, v) => {
+      if (v.faqs?.some((f) => f.q?.trim())) return faqs;
+      const pick = [/^What is the Void Research coupon code\?$/, /work on all \d+ compounds\?$/, /cheaper than other peptide suppliers\?$/, /coupon code working\?$/, /legit\?$/];
+      const picked = pick.map((re) => faqs.find((f) => re.test(f.q))).filter((f): f is Faq => !!f);
+      return picked.length ? picked : faqs;
+    },
+    extraFaqs: (v) => {
+      const pct = v.discount_percent || 10;
+      const code = v.code || "PEPLOOKUP";
+      const compounds = v.compounds || 27;
+      return [
+        {
+          q: "What is the Void Research coupon code?",
+          a: `The Void Research coupon code is ${code}. It gives ${pct}% off sitewide and was working when we tested it at checkout on ${formatDate(v.verified_at)}. Enter it in capital letters, or copy it from this page.`,
+        },
+        {
+          q: `Does the Void Research discount code work on all ${compounds} compounds?`,
+          a: `Yes. ${code} is a sitewide code, so the ${pct}% Void Research discount applies to every compound in its ${compounds}-compound range. Stores usually accept one code per order, so put everything in a single cart.`,
+        },
+        {
+          q: "Is Void Research cheaper than other peptide suppliers?",
+          a: `On more than half of what we checked, yes. At our last price check Void Research was below the market median on 13 of the 22 compounds we could compare, before the ${pct}% code. The other 9 were at or above the median, and 5 of its compounds were not part of our comparison, so check those items yourself.`,
+        },
+      ];
+    },
+  },
+  "renova-peptides": {
+    meta: (v) => {
+      const pct = v.discount_percent || 10;
+      const code = v.code || "peplookup";
+      const month = v.verified_at ? new Date(v.verified_at).toLocaleString("en-US", { month: "short", year: "numeric", timeZone: "UTC" }) : "";
+      return {
+        title: `Renova Peptides Coupon Code${month ? ` (${month})` : ""}: ${pct}% Off Low Prices`,
+        description: `Code ${code} takes ${pct}% off sitewide at Renova Peptides, a store below the market median on all 13 compounds we priced. Tested ${formatDate(v.verified_at)}.`,
+      };
+    },
+    forceIndex: true,
+    richSchema: true,
+    keywords: ["Renova Peptides coupon code", "Renova Peptides discount code"],
+    about: renovaPeptidesAbout,
+    // Show only these 5 FAQs, in this order. If FAQs are written in the admin, those are shown unchanged instead.
+    selectFaqs: (faqs, v) => {
+      if (v.faqs?.some((f) => f.q?.trim())) return faqs;
+      const pick = [/^What is the Renova Peptides coupon code\?$/, /cheaper than other peptide stores\?$/, /case sensitive\?$/, /coupon code working\?$/, /legit\?$/];
+      const picked = pick.map((re) => faqs.find((f) => re.test(f.q))).filter((f): f is Faq => !!f);
+      return picked.length ? picked : faqs;
+    },
+    extraFaqs: (v) => {
+      const pct = v.discount_percent || 10;
+      const code = v.code || "peplookup";
+      return [
+        {
+          q: "What is the Renova Peptides coupon code?",
+          a: `The Renova Peptides coupon code is ${code}. It takes ${pct}% off sitewide, and it applied to the whole cart when we tested it at checkout on ${formatDate(v.verified_at)}.`,
+        },
+        {
+          q: "Is Renova Peptides cheaper than other peptide stores?",
+          a: `On everything we checked, yes. At our last price check Renova Peptides was below the market median on all 13 compounds we compared, before any code. The ${pct}% Renova Peptides discount code then comes off those lower prices. Items outside our comparison may be priced differently.`,
+        },
+        {
+          q: "Is the Renova Peptides discount code case sensitive?",
+          a: `We tested it as ${code}, in lowercase. Some stores treat codes as case sensitive, so enter it exactly as shown, or use the Copy button on this page to avoid typos.`,
+        },
+      ];
+    },
+  },
 };
+
+function renovaPeptidesAbout(v: Vendor) {
+  const pct = v.discount_percent || 10;
+  const money = (n: number) => `$${n.toFixed(2).replace(/\.00$/, "")}`;
+  const save = (total: number) => money((total * pct) / 100);
+  const pay = (total: number) => money(total - (total * pct) / 100);
+  const code = v.code || "peplookup";
+  const verified = formatDate(v.verified_at);
+  return `## Renova Peptides coupon code: ${pct}% off prices that already beat the market
+
+Use code **${code}** for **${pct}% off sitewide** at Renova Peptides. We tested it at checkout on **${verified}**. Renova Peptides has sold research peptides since ${v.founded || 2025}, and at our last check it was **below the market median on all 13 compounds** we compared, one of only a handful of stores on our list with a clean sweep. That makes this Renova Peptides discount code a saving on top of a saving.
+
+### What ${code} takes off your order
+
+| Cart | You save | You pay |
+| --- | --- | --- |
+| $60 | ${save(60)} | ${pay(60)} |
+| $150 | ${save(150)} | ${pay(150)} |
+| $300 | ${save(300)} | ${pay(300)} |
+
+Enter the code in lowercase or use the Copy button. For items outside our 13-compound check, compare on our [peptide coupon code list](/coupons), and check the batch COA with our [COA guide](/guides/how-to-read-a-peptide-coa). For laboratory research only.`;
+}
+
+function voidResearchAbout(v: Vendor) {
+  const pct = v.discount_percent || 10;
+  const money = (n: number) => `$${n.toFixed(2).replace(/\.00$/, "")}`;
+  const save = (total: number) => money((total * pct) / 100);
+  const pay = (total: number) => money(total - (total * pct) / 100);
+  const code = v.code || "PEPLOOKUP";
+  const verified = formatDate(v.verified_at);
+  const compounds = v.compounds || 27;
+  const site = (v.website_url || "https://voidresearch.shop").replace(/^https?:\/\/(www\.)?/, "").replace(/\/.*$/, "");
+  return `## Void Research coupon code: the short answer
+
+The Void Research coupon code is **${code}**: **${pct}% off sitewide** at ${site}, tested on **${verified}**. Void Research was below the market median on 13 of 22 compounds we compared, so the Void Research discount code comes off already low prices.
+
+### What ${code} saves
+
+| Cart | You save | You pay |
+| --- | --- | --- |
+| $50 | ${save(50)} | ${pay(50)} |
+| $180 | ${save(180)} | ${pay(180)} |
+| $350 | ${save(350)} | ${pay(350)} |
+
+Before you pay, compare prices on our [peptide coupon code list](/coupons) and check the batch COA with our [COA guide](/guides/how-to-read-a-peptide-coa). For laboratory research only.`;
+}
+
+function eliteResearchLabAbout(v: Vendor) {
+  const pct = v.discount_percent || 10;
+  const money = (n: number) => `$${n.toFixed(2).replace(/\.00$/, "")}`;
+  const save = (total: number) => money((total * pct) / 100);
+  const pay = (total: number) => money(total - (total * pct) / 100);
+  const code = v.code || "adamdan";
+  const verified = formatDate(v.verified_at);
+  const compounds = v.compounds || 25;
+  return `## Elite Research Lab coupon code: ${pct}% off with ${code}
+
+Use the Elite Research Lab coupon code **${code}** to take **${pct}% off sitewide**. We tested it at checkout on **${verified}** and the discount applied to the whole cart. Elite Research Lab is a U.S. research peptide supplier that has been selling since ${v.founded || 2025}, with **${compounds} compounds** in its range.
+
+### Where Elite Research Lab's prices land
+
+In our last price comparison, **13 of its ${compounds} compounds were below the market median**, and the other 12 were at or above it. That near-even split means the value of an order depends on what is in it. On the cheaper half, the ${pct}% Elite Research Lab discount code adds to a price that already beats most stores. On the rest, ${pct}% may only bring the price close to the market middle. Our guide on [comparing peptide prices after a discount](/guides/compare-peptide-prices-after-discount) shows how to check price per mg item by item.
+
+### ${pct}% off in real numbers
+
+| Order before the code | Saving with ${code} | Order after the code (before shipping) |
+| --- | --- | --- |
+| $120 | ${save(120)} | ${pay(120)} |
+| $200 | ${save(200)} | ${pay(200)} |
+| $400 | ${save(400)} | ${pay(400)} |
+
+### Elite Research Lab vs Elite Edge Biotech: don't mix up the codes
+
+Two different stores on our list have "Elite" in the name, and both are U.S. sellers that started in 2025. **${code} only works at Elite Research Lab.** If you are shopping at Elite Edge Biotech instead, use the code on our [Elite Edge Biotech coupon page](/coupons/elite-edge-biotech). Check the store's web address at checkout before you paste a code.
+
+### Before you check out
+
+- **Use one code per order.** We have not confirmed whether ${code} stacks with sales or other codes.
+- **Ask for the batch COA** (certificate of analysis) for each compound, and note which lab ran the test.
+- **Research use only.** Products are sold for laboratory research, not for human consumption.
+
+If ${code} stops working, tell us through the contact page and we will re-test the Elite Research Lab coupon code.`;
+}
+
+function peptixaLabsAbout(v: Vendor) {
+  const pct = v.discount_percent || 15;
+  const money = (n: number) => `$${n.toFixed(2).replace(/\.00$/, "")}`;
+  const save = (total: number) => money((total * pct) / 100);
+  const pay = (total: number) => money(total - (total * pct) / 100);
+  const code = v.code || "ADAMD";
+  const verified = formatDate(v.verified_at);
+  const products = v.compounds || 9;
+  return `## Peptixa Labs coupon code ${code}: ${pct}% off a fully tested range
+
+**${code}** is the Peptixa Labs coupon code we confirmed at checkout on **${verified}**. It takes **${pct}% off sitewide**, which at a store this size means every one of its **${products} products**. Peptixa Labs is a small U.S. research peptide supplier that launched in ${v.founded || 2026}, and what sets it apart is simple: **it links a certificate of analysis (COA) for every compound it sells.** Many stores we track publish reports for only part of their catalog.
+
+### What ${pct}% off with ${code} looks like
+
+| Cart total | You save | New total (before shipping) |
+| --- | --- | --- |
+| $75 | ${save(75)} | ${pay(75)} |
+| $150 | ${save(150)} | ${pay(150)} |
+| $300 | ${save(300)} | ${pay(300)} |
+
+### Why a COA for every compound matters
+
+A COA is the lab report that shows what a batch contains and how pure it is. When a store covers only some of its products, it is easy to end up buying the one item without a report. At Peptixa Labs that gap should not exist, but it is still worth opening the report before you pay: check that the batch number matches, look at the purity figure, and note which lab ran the test. Our guide on [how to read a peptide COA](/guides/how-to-read-a-peptide-coa) walks through each line.
+
+### Getting the most from the Peptixa Labs discount code
+
+- **Combine items into one order.** The code covers the whole cart, and stores usually accept one code per order, so a single checkout gets the full ${pct}% on everything.
+- **Check the range first.** With ${products} products, Peptixa Labs may not carry every compound on your list. For anything it doesn't sell, our [peptide coupon code list](/coupons) has verified codes for other suppliers.
+- **Paste, don't type.** ${code} is five capital letters, and the Copy button on this page avoids typos.
+
+Products are sold for laboratory research only. If ${code} stops working, tell us through the contact page and we will re-check the Peptixa Labs coupon code.`;
+}
+
+function aminoVaultAbout(v: Vendor) {
+  const pct = v.discount_percent || 15;
+  const money = (n: number) => `$${n.toFixed(2).replace(/\.00$/, "")}`;
+  const save = (total: number) => money((total * pct) / 100);
+  const pay = (total: number) => money(total - (total * pct) / 100);
+  const code = v.code || "PEPLOOKUP";
+  const verified = formatDate(v.verified_at);
+  const coas = v.coa_count || 4;
+  return `## AminoVault coupon code: what you get
+
+Enter **${code}** at the AminoVault checkout and **${pct}% comes off your entire cart**. We last saw it apply on **${verified}**. AminoVault is a U.S. research peptide store that opened in ${v.founded || 2025}, and its list prices run **above the market median**, so this AminoVault discount code is the simplest way to bring your order closer to typical market prices.
+
+### How much the ${pct}% AminoVault promo code saves
+
+| Order subtotal | Saving with ${code} | You pay (before shipping) |
+| --- | --- | --- |
+| $100 | ${save(100)} | ${pay(100)} |
+| $250 | ${save(250)} | ${pay(250)} |
+| $500 | ${save(500)} | ${pay(500)} |
+
+### Before you order from AminoVault
+
+- **Run the numbers first.** Even after ${pct}% off, a store priced above the median can cost more than a cheaper rival. Check your items against our [peptide coupon code list](/coupons), and see our guide to [comparing peptide prices after a discount](/guides/compare-peptide-prices-after-discount) for the price-per-mg method.
+- **Look for a lab report.** AminoVault links only ${coas} COA reports, so ask for one that covers your batch if it isn't listed, and stick to one code per order.
+
+Did ${code} fail for you? Send us a note through the contact page and we will check the AminoVault coupon code again.`;
+}
 
 function vortexResearchAbout(v: Vendor) {
   const pct = v.discount_percent || 30;

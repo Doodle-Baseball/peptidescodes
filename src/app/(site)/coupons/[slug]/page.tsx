@@ -51,7 +51,8 @@ export default async function VendorPage({ params }: Props) {
   const override = couponOverride(v.slug);
   // Pages with extra FAQs also drop blank admin FAQ rows (empty question), which would be invalid FAQ schema.
   const baseFaqs = override?.extraFaqs ? vendorFaqs(v).filter((f) => f.q?.trim()) : vendorFaqs(v);
-  const faqs = [...baseFaqs, ...(override?.extraFaqs?.(v) ?? []).filter((f) => !baseFaqs.some((b) => b.q === f.q))];
+  const allFaqs = [...baseFaqs, ...(override?.extraFaqs?.(v) ?? []).filter((f) => !baseFaqs.some((b) => b.q === f.q))];
+  const faqs = override?.selectFaqs ? override.selectFaqs(allFaqs, v) : allFaqs;
   const summary = vendorSummary(v);
   const related = all
     .filter((x) => x.slug !== v.slug && x.coupon_active && x.code)
